@@ -11,29 +11,17 @@ class ApiResponse {
 
   bool get isOk => statusCode >= 200 && statusCode < 300;
 
-  /// Prefer human-readable validation / message from Laravel.
   String get message {
-    if (json == null) {
-      return body.isNotEmpty ? body : 'HTTP $statusCode';
+    if (json != null) {
+      final m = json!['message'];
+      if (m is String && m.isNotEmpty) return m;
+      final errors = json!['errors'];
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty) return first.first.toString();
+        return first.toString();
+      }
     }
-
-    // Laravel validation: { message: "...", errors: { field: ["..."] } }
-    final errors = json!['errors'];
-    if (errors is Map && errors.isNotEmpty) {
-      final parts = <String>[];
-      errors.forEach((key, value) {
-        if (value is List && value.isNotEmpty) {
-          parts.add(value.first.toString());
-        } else if (value != null) {
-          parts.add(value.toString());
-        }
-      });
-      if (parts.isNotEmpty) return parts.join('\n');
-    }
-
-    final m = json!['message'];
-    if (m is String && m.isNotEmpty) return m;
-
     return body.isNotEmpty ? body : 'HTTP $statusCode';
   }
 }
@@ -47,6 +35,7 @@ class ApiClient {
     final base = ApiConfig.baseUrl.endsWith('/')
         ? ApiConfig.baseUrl.substring(0, ApiConfig.baseUrl.length - 1)
         : ApiConfig.baseUrl;
+    // path may already include query string
     if (path.contains('?')) {
       final parts = path.split('?');
       final qp = <String, String>{...?query};

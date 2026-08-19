@@ -153,6 +153,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
                     initialValue: priority,
                     decoration: const InputDecoration(labelText: 'Prioritas'),
                     items: const [
+                      DropdownMenuItem(value: 'low', child: Text('Low')),
                       DropdownMenuItem(value: 'normal', child: Text('Normal')),
                       DropdownMenuItem(value: 'high', child: Text('High')),
                       DropdownMenuItem(value: 'urgent', child: Text('Urgent')),
