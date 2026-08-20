@@ -33,9 +33,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.invoices, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk || res.json == null) {
         setState(() {
           _error = res.message;

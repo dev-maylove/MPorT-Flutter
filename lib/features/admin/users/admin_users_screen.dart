@@ -46,9 +46,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
     try {
       final res = await auth.client.get(path, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk) {
         setState(() {
           _error = res.message;
@@ -126,7 +124,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: role,
+                      value: role,
                       decoration: const InputDecoration(labelText: 'Role'),
                       items: const [
                         DropdownMenuItem(value: 'user', child: Text('user')),
@@ -174,9 +172,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           )
         : await auth.client.post(ApiConfig.adminUsers, auth: true, body: body);
 
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -209,9 +205,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     if (ok != true || !mounted) return;
     final auth = context.read<AuthService>();
     final res = await auth.client.delete('${ApiConfig.adminUsers}/${user['id']}', auth: true);
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(res.isOk ? 'User dihapus' : res.message)),
     );

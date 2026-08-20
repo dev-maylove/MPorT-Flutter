@@ -31,9 +31,7 @@ class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.customers, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk) {
         setState(() {
           _error = res.message;

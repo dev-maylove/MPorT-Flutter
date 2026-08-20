@@ -34,9 +34,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     try {
       await auth.fetchMe();
       final res = await auth.client.get(ApiConfig.dashboard, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (res.isOk && res.json != null) {
         setState(() {
           _summary = DashboardSummary.fromJson(res.json!);

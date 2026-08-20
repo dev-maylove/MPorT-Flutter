@@ -29,6 +29,12 @@ class _TechMapScreenState extends State<TechMapScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -40,9 +46,7 @@ class _TechMapScreenState extends State<TechMapScreen> {
         '${ApiConfig.techMap}?filter=$_filter',
         auth: true,
       );
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk || res.json == null) {
         var msg = res.message;
         if (res.statusCode == 404 || msg.toLowerCase().contains('could not be found')) {

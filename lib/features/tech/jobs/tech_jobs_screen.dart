@@ -32,9 +32,7 @@ class _TechJobsScreenState extends State<TechJobsScreen> {
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.tickets, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk) {
         setState(() {
           _error = res.message;

@@ -44,9 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           passwordConfirmation: _confirm.text,
           phone: _phone.text.trim(),
         );
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     setState(() => _busy = false);
     if (err != null) setState(() => _error = err);
   }

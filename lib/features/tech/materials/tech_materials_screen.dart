@@ -46,9 +46,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.techMaterials, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk || res.json == null) {
         var msg = res.message;
         if (res.statusCode == 404 || msg.toLowerCase().contains('could not be found')) {
@@ -95,6 +93,13 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
     return out;
   }
 
+  static int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? 0;
+    return 0;
+  }
+
   Future<void> _showRequestForm() async {
     final qtyCtrl = TextEditingController(text: '1');
     final notesCtrl = TextEditingController();
@@ -129,14 +134,19 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(labelText: 'Material'),
                     items: _catalog
-                        .map((m) => DropdownMenuItem(
-                              value: m['id'] as int?,
-                              child: Text('${m['name']} (stok ${m['stock']})'),
+                        .map((m) {
+                          final id = _asInt(m['id']);
+                          return MapEntry(id, m);
+                        })
+                        .where((e) => e.key > 0)
+                        .map((e) => DropdownMenuItem(
+                              value: e.key,
+                              child: Text('${e.value['name']} (stok ${e.value['stock']})'),
                             ))
                         .toList(),
                     onChanged: (v) {
                       materialId = v;
-                      final found = _catalog.where((m) => m['id'] == v);
+                      final found = _catalog.where((m) => _asInt(m['id']) == v);
                       if (found.isNotEmpty) {
                         materialName = found.first['name']?.toString();
                       }
@@ -150,7 +160,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
-                    initialValue: priority,
+                    value: priority,
                     decoration: const InputDecoration(labelText: 'Prioritas'),
                     items: const [
                       DropdownMenuItem(value: 'low', child: Text('Low')),
@@ -192,9 +202,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
         'notes': notesCtrl.text.trim(),
       },
     );
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(res.isOk ? 'Request terkirim' : res.message)),
     );
@@ -231,9 +239,14 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
               DropdownButtonFormField<int>(
                 decoration: const InputDecoration(labelText: 'Material'),
                 items: _stock
-                    .map((m) => DropdownMenuItem(
-                          value: m['id'] as int?,
-                          child: Text('${m['name']} (stok ${m['stock']})'),
+                    .map((m) {
+                      final id = _asInt(m['id']);
+                      return MapEntry(id, m);
+                    })
+                    .where((e) => e.key > 0)
+                    .map((e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text('${e.value['name']} (stok ${e.value['stock']})'),
                         ))
                     .toList(),
                 onChanged: (v) => materialId = v,
@@ -261,20 +274,25 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
       },
     );
 
-    if (ok != true || materialId == null || !mounted) return;
+    if (ok != true || materialId == null || !mounted) {
+      qtyCtrl.dispose();
+      notesCtrl.dispose();
+      return;
+    }
     final auth = context.read<AuthService>();
+    final body = {
+      'material_id': materialId,
+      'qty': int.tryParse(qtyCtrl.text) ?? 1,
+      'notes': notesCtrl.text.trim(),
+    };
+    qtyCtrl.dispose();
+    notesCtrl.dispose();
     final res = await auth.client.post(
       ApiConfig.techMaterialUsage,
       auth: true,
-      body: {
-        'material_id': materialId,
-        'qty': int.tryParse(qtyCtrl.text) ?? 1,
-        'notes': notesCtrl.text.trim(),
-      },
+      body: body,
     );
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(res.isOk ? 'Pemakaian tercatat' : res.message)),
     );

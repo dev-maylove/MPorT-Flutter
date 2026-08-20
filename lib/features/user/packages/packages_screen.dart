@@ -33,9 +33,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
     final client = context.read<AuthService>().client;
     try {
       final res = await client.get(ApiConfig.packages);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk || res.json == null) {
         setState(() {
           _error = res.message;

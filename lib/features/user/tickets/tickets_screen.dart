@@ -31,9 +31,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.tickets, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (!res.isOk) {
         setState(() {
           _error = res.message;
@@ -92,7 +90,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: priority,
+                  value: priority,
                   decoration: const InputDecoration(labelText: 'Prioritas'),
                   items: const [
                     DropdownMenuItem(value: 'low', child: Text('Low')),
@@ -136,9 +134,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
         'priority': priority,
       },
     );
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     if (res.isOk) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ticket terkirim')),

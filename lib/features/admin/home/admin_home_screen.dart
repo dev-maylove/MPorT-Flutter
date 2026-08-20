@@ -33,9 +33,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final auth = context.read<AuthService>();
     try {
       final res = await auth.client.get(ApiConfig.dashboard, auth: true);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       if (res.isOk && res.json != null) {
         setState(() {
           _summary = DashboardSummary.fromJson(res.json!);

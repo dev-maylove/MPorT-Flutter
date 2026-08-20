@@ -36,9 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _email.text.trim(),
           _pass.text,
         );
-    if (!mounted) {
-        return;
-      }
+    if (!mounted) return;
     setState(() => _busy = false);
     if (err != null) {
       setState(() => _error = err);
