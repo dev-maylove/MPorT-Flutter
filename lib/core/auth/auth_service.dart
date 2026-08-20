@@ -52,14 +52,34 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> login(String email, String password) async {
+  /// [identity] = email, nomor HP, atau ID pelanggan / user id.
+  Future<String?> login(String identity, String password) async {
+    final id = identity.trim();
     final res = await _client.post(ApiConfig.login, body: {
-      'email': email,
+      // Kompatibel backend yang mengharapkan `email` atau `login`
+      'login': id,
+      'email': id,
       'password': password,
       'device_name': 'mport-flutter',
     });
     if (!res.isOk) return res.message;
     return _saveAuthFromResponse(res.json);
+  }
+
+  /// Request reset password. Return error message, atau null jika sukses.
+  Future<String?> forgotPassword(String identity) async {
+    final id = identity.trim();
+    if (id.isEmpty) return 'Email / No. HP / ID wajib diisi';
+    try {
+      final res = await _client.post(ApiConfig.forgotPassword, body: {
+        'login': id,
+        'email': id,
+      });
+      if (!res.isOk) return res.message;
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
   }
 
   Future<String?> register({

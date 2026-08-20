@@ -42,6 +42,14 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Login screen UX
+
+- Hapus subtitle *“Portal pelanggan & teknisi MandalaNet”*.
+- Judul diganti **MPorT** (tanpa kata “Masuk”).
+- Hapus opsi **Lanjut sebagai tamu**.
+- Tambah **Lupa password?** (dialog + `POST /api/auth/forgot-password`).
+- Login menerima **email / nomor HP / ID** (field `login` + `email` ke API).
+
 ### 2026-08-20 — Wireframe city skyline
 
 - Procedural **line-art city** at the bottom of the animated background.

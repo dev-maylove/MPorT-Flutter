@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController();
+  final _loginId = TextEditingController();
   final _pass = TextEditingController();
   final _form = GlobalKey<FormState>();
   bool _obscure = true;
@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _email.dispose();
+    _loginId.dispose();
     _pass.dispose();
     super.dispose();
   }
@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     final err = await context.read<AuthService>().login(
-          _email.text.trim(),
+          _loginId.text.trim(),
           _pass.text,
         );
     if (!mounted) return;
@@ -42,7 +42,66 @@ class _LoginScreenState extends State<LoginScreen> {
     if (err != null) {
       setState(() => _error = err);
     }
-    // redirect handled by go_router
+  }
+
+  Future<void> _forgotPassword() async {
+    final ctrl = TextEditingController(text: _loginId.text.trim());
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Lupa password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Masukkan email, nomor HP, atau ID akun. Link reset akan dikirim jika data terdaftar.',
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.text,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Email / No. HP / ID',
+                prefixIcon: Icon(Icons.person_outline_rounded),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (ctrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Kirim'),
+          ),
+        ],
+      ),
+    );
+
+    final identity = ctrl.text.trim();
+    ctrl.dispose();
+    if (ok != true || !mounted || identity.isEmpty) return;
+
+    final err = await context.read<AuthService>().forgotPassword(identity);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          err ?? 'Jika data terdaftar, instruksi reset password telah dikirim.',
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: err != null ? AppColors.danger : AppColors.card,
+      ),
+    );
   }
 
   @override
@@ -51,92 +110,121 @@ class _LoginScreenState extends State<LoginScreen> {
       homePath: '/login',
       isOnHome: true,
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(Icons.wifi_tethering_rounded, size: 56, color: AppColors.cyan),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Masuk MPorT',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Portal pelanggan & teknisi MandalaNet',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.muted),
-                  ),
-                  const SizedBox(height: 28),
-                  TextFormField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.wifi_tethering_rounded,
+                      size: 56,
+                      color: AppColors.cyan,
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Email wajib';
-                      if (!v.contains('@')) return 'Email tidak valid';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _pass,
-                    obscureText: _obscure,
-                    autofillHints: const [AutofillHints.password],
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _obscure = !_obscure),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'MPorT',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
                       ),
                     ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Password wajib';
-                      return null;
-                    },
-                  ),
-                  if (_error != null) ...[
+                    const SizedBox(height: 28),
+                    TextFormField(
+                      controller: _loginId,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [
+                        AutofillHints.username,
+                        AutofillHints.email,
+                        AutofillHints.telephoneNumber,
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'Email / No. HP / ID',
+                        hintText: 'contoh@email.com · 08xx · ID pelanggan',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Email, nomor HP, atau ID wajib diisi';
+                        }
+                        if (v.trim().length < 3) {
+                          return 'Minimal 3 karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _pass,
+                      obscureText: _obscure,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _busy ? null : _submit(),
+                      autofillHints: const [AutofillHints.password],
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () =>
+                              setState(() => _obscure = !_obscure),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Password wajib';
+                        return null;
+                      },
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _busy ? null : _forgotPassword,
+                        child: const Text(
+                          'Lupa password?',
+                          style: TextStyle(
+                            color: AppColors.cyan,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: AppColors.danger),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 4),
+                    ElevatedButton(
+                      onPressed: _busy ? null : _submit,
+                      child: _busy
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Masuk'),
+                    ),
                     const SizedBox(height: 12),
-                    Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                    OutlinedButton(
+                      onPressed: () => context.push('/register'),
+                      child: const Text('Daftar akun baru'),
+                    ),
                   ],
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _submit,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Masuk'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () => context.push('/register'),
-                    child: const Text('Daftar akun baru'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.push('/guest'),
-                    child: const Text('Lanjut sebagai tamu', style: TextStyle(color: AppColors.muted)),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
