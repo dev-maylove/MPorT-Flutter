@@ -1,10 +1,8 @@
-/// Contoh penggunaan Glassmorphism UI Kit — MPorT Flutter
-/// File ini hanya dokumentasi / referensi, tidak di-import production.
-///
-/// Import:
-/// ```dart
-/// import 'package:mport/core/widgets/glass.dart';
-/// ```
+// Contoh penggunaan Glassmorphism UI Kit — MPorT Flutter
+// File ini hanya dokumentasi / referensi, tidak di-import production.
+//
+// Import:
+//   import 'package:mport/core/widgets/glass.dart';
 
 import 'package:flutter/material.dart';
 
