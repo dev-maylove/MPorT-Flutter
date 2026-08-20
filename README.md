@@ -42,6 +42,21 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — App icon + login logo
+
+- Logo login & **ikon aplikasi** diganti gambar MPorT crown/lightning terbaru.
+- Adaptive icon Android (`mipmap-*/ic_launcher*`).
+
+
+
+### 2026-08-20 — Network errors + dialog dispose
+
+- `ApiClient` menangkap `SocketException` / timeout / SSL dan menampilkan pesan + **URL server**.
+- Dialog ticket: dispose controller setelah frame (hindari crash `_dependents`).
+- Login menampilkan `Server: <API_BASE_URL>` saat error (debug koneksi).
+
+
+
 ### 2026-08-20 — Fix missing Gradle wrapper (CI)
 
 - Tambah `android/gradlew`, `android/gradlew.bat`, dan `gradle-wrapper.jar`.

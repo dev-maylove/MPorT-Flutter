@@ -111,12 +111,18 @@ class _TicketsScreenState extends State<TicketsScreen> {
       ),
     );
 
+    final sub = subject.text.trim();
+    final desc = description.text.trim();
+    // Dispose setelah dialog unmount (hindari _dependents assertion)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      subject.dispose();
+      description.dispose();
+    });
+
     if (ok != true || !mounted) {
       return;
     }
 
-    final sub = subject.text.trim();
-    final desc = description.text.trim();
     if (sub.isEmpty || desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Subjek dan deskripsi wajib diisi.')),

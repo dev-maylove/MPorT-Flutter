@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../core/api/api_client.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/exit_guard.dart';
@@ -164,6 +165,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         _error!,
                         style: const TextStyle(color: AppColors.danger),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Server: ${ApiClient.effectiveBaseUrl}',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 11,
+                        ),
                       ),
                       const SizedBox(height: 8),
                     ],
