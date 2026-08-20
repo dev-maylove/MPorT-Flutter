@@ -395,8 +395,14 @@ class _BgPainter extends CustomPainter {
       canvas.drawCircle(Offset(ox, oy), radius, orbPaint);
     }
 
+    // Crescent moon + star (most prominent celestial mark)
+    _drawCrescentMoon(canvas, size, angle);
+
     // Wireframe city skyline (line art)
     _drawCity(canvas, size, angle);
+
+    // "الله" — brightest text at the very top of the background
+    _drawAllah(canvas, size, angle);
 
     // Spatial-grid edges (only link particles, capped)
     buildGrid(size, _cellPx);
@@ -480,20 +486,131 @@ class _BgPainter extends CustomPainter {
     return 1;
   }
 
+  /// Prominent cyan crescent moon + 5-point star (skyline-matched, brightest mark).
+  void _drawCrescentMoon(Canvas canvas, Size size, double angle) {
+    final w = size.width;
+    final h = size.height;
+    final short = size.shortestSide;
+
+    // Position: upper-right sky, slight drift
+    final cx = w * (0.78 + 0.012 * math.sin(angle * 0.35));
+    final cy = h * (0.16 + 0.010 * math.cos(angle * 0.28));
+    final R = short * 0.095; // outer moon radius
+
+    // Soft outer glow (most conspicuous)
+    final glowPulse = 0.92 + 0.08 * math.sin(angle * 1.1);
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.cyan.withValues(alpha: 0.55 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.22 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.06),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.35, 0.65, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: R * 2.4));
+    canvas.drawCircle(Offset(cx, cy), R * 2.4, glowPaint);
+
+    // Crescent via path difference: large disc minus offset disc
+    final crescent = Path()
+      ..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: R));
+    final cut = Path()
+      ..addOval(Rect.fromCircle(
+        center: Offset(cx + R * 0.38, cy - R * 0.08),
+        radius: R * 0.82,
+      ));
+    final moonPath = Path.combine(PathOperation.difference, crescent, cut);
+
+    // Bright fill
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = RadialGradient(
+        center: const Alignment(-0.35, -0.2),
+        colors: [
+          const Color(0xFF7FF7FF), // almost white-cyan core
+          AppColors.cyan,
+          AppColors.cyan.withValues(alpha: 0.85),
+        ],
+        stops: const [0.0, 0.55, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: R));
+    canvas.drawPath(moonPath, fillPaint);
+
+    // Crisp stroke outline
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.5, short * 0.004)
+      ..color = const Color(0xFFB8FFFF).withValues(alpha: 0.95);
+    canvas.drawPath(moonPath, strokePaint);
+
+    // 5-point star to the upper-right of the crescent tip
+    final starCx = cx + R * 0.95;
+    final starCy = cy - R * 0.55;
+    final starR = R * 0.28;
+    final starPath = _starPath(Offset(starCx, starCy), starR, starR * 0.42, 5);
+
+    // Star glow
+    final starGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFFFFFFF).withValues(alpha: 0.75 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.35 * glowPulse),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(
+          Rect.fromCircle(center: Offset(starCx, starCy), radius: starR * 2.2));
+    canvas.drawCircle(Offset(starCx, starCy), starR * 2.2, starGlow);
+
+    final starFill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFE8FFFF);
+    canvas.drawPath(starPath, starFill);
+
+    final starStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.2, short * 0.003)
+      ..color = AppColors.cyan.withValues(alpha: 0.95);
+    canvas.drawPath(starPath, starStroke);
+  }
+
+  Path _starPath(Offset center, double outerR, double innerR, int points) {
+    final path = Path();
+    final step = math.pi / points;
+    // Start at top
+    var angle = -math.pi / 2;
+    for (var i = 0; i < points * 2; i++) {
+      final r = i.isEven ? outerR : innerR;
+      final x = center.dx + math.cos(angle) * r;
+      final y = center.dy + math.sin(angle) * r;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+      angle += step;
+    }
+    path.close();
+    return path;
+  }
+
   void _drawCity(Canvas canvas, Size size, double angle) {
     final w = size.width;
     final h = size.height;
     final ground = h * 0.92;
     final maxBuildingH = h * 0.38;
 
+    // Skyline palette: #00E5FF (base) + #63F5FF (highlight)
+    const skyBase = Color(0xFF00E5FF);
+    const skyBright = Color(0xFF63F5FF);
+
     // Horizon base line
     cityStroke
       ..strokeWidth = 1.15
-      ..color = AppColors.cyan.withValues(alpha: 0.38);
+      ..color = skyBase.withValues(alpha: 0.45);
     canvas.drawLine(Offset(0, ground), Offset(w, ground), cityStroke);
 
     // Soft ground fill strip
-    cityWindow.color = const Color(0x2800E5FF);
+    cityWindow.color = const Color(0x3300E5FF);
     canvas.drawRect(
       Rect.fromLTRB(0, ground, w, h),
       cityWindow,
@@ -510,7 +627,7 @@ class _BgPainter extends CustomPainter {
       // Building outline
       cityStroke
         ..strokeWidth = 1.25
-        ..color = AppColors.cyan.withValues(alpha: 0.42);
+        ..color = skyBase.withValues(alpha: 0.48);
       final outline = Path()
         ..moveTo(left, ground)
         ..lineTo(left, top)
@@ -521,7 +638,7 @@ class _BgPainter extends CustomPainter {
       // Roof line accent
       cityStroke
         ..strokeWidth = 1.5
-        ..color = AppColors.cyan.withValues(alpha: 0.52);
+        ..color = skyBright.withValues(alpha: 0.62);
       canvas.drawLine(Offset(left, top), Offset(right, top), cityStroke);
 
       // Spire / peak
@@ -530,7 +647,7 @@ class _BgPainter extends CustomPainter {
         final peak = top - bh * 0.12;
         cityStroke
           ..strokeWidth = 1.15
-          ..color = AppColors.cyan.withValues(alpha: 0.55);
+          ..color = skyBright.withValues(alpha: 0.65);
         canvas.drawLine(Offset(left + bw * 0.2, top), Offset(mid, peak), cityStroke);
         canvas.drawLine(Offset(right - bw * 0.2, top), Offset(mid, peak), cityStroke);
       }
@@ -541,7 +658,7 @@ class _BgPainter extends CustomPainter {
         final tip = top - (b.spire ? bh * 0.18 : bh * 0.1);
         cityStroke
           ..strokeWidth = 1.05
-          ..color = AppColors.cyan.withValues(alpha: 0.60);
+          ..color = skyBright.withValues(alpha: 0.72);
         canvas.drawLine(Offset(mid, top), Offset(mid, tip), cityStroke);
         canvas.drawLine(
           Offset(mid - 4, tip + 6),
@@ -553,7 +670,7 @@ class _BgPainter extends CustomPainter {
       // Floor lines (horizontal)
       cityStroke
         ..strokeWidth = 0.7
-        ..color = AppColors.cyan.withValues(alpha: 0.24);
+        ..color = skyBase.withValues(alpha: 0.28);
       final floorH = bh / (b.floors + 1);
       for (var f = 1; f <= b.floors; f++) {
         final fy = top + floorH * f;
@@ -563,7 +680,7 @@ class _BgPainter extends CustomPainter {
       // Column lines (vertical)
       cityStroke
         ..strokeWidth = 0.65
-        ..color = AppColors.cyan.withValues(alpha: 0.20);
+        ..color = skyBase.withValues(alpha: 0.24);
       final colW = bw / (b.cols + 1);
       for (var c = 1; c <= b.cols; c++) {
         final cx = left + colW * c;
@@ -586,7 +703,7 @@ class _BgPainter extends CustomPainter {
           final wy = top + padY + cellH * (row + 0.5);
           final rw = cellW * 0.32;
           final rh = cellH * 0.32;
-          cityWindow.color = AppColors.cyan.withValues(alpha: 0.22 * tw);
+          cityWindow.color = skyBright.withValues(alpha: 0.28 * tw);
           canvas.drawRect(
             Rect.fromCenter(center: Offset(wx, wy), width: rw, height: rh),
             cityWindow,
@@ -599,10 +716,51 @@ class _BgPainter extends CustomPainter {
     final vanish = Offset(w * 0.5, ground + h * 0.02);
     cityStroke
       ..strokeWidth = 0.85
-      ..color = AppColors.cyan.withValues(alpha: 0.18);
+      ..color = skyBase.withValues(alpha: 0.22);
     for (final fx in [0.15, 0.3, 0.45, 0.55, 0.7, 0.85]) {
       canvas.drawLine(Offset(w * fx, ground), vanish, cityStroke);
     }
+  }
+
+  /// Brightest "الله" at the top of the canvas (skyline palette).
+  void _drawAllah(Canvas canvas, Size size, double angle) {
+    const skyBright = Color(0xFF63F5FF);
+    const skyBase = Color(0xFF00E5FF);
+
+    final pulse = 0.88 + 0.12 * math.sin(angle * 1.6);
+    final fontSize = (size.shortestSide * 0.085).clamp(28.0, 52.0);
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: 'الله',
+        style: TextStyle(
+          color: skyBright.withValues(alpha: (0.95 * pulse).clamp(0.0, 1.0)),
+          fontSize: fontSize,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 2,
+          shadows: [
+            Shadow(
+              color: skyBright.withValues(alpha: 0.55 * pulse),
+              blurRadius: 18,
+            ),
+            Shadow(
+              color: skyBase.withValues(alpha: 0.35 * pulse),
+              blurRadius: 28,
+            ),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.center,
+    )..layout(maxWidth: size.width);
+
+    // Paling atas, sedikit di bawah status bar area
+    final topPad = size.height * 0.045;
+    final offset = Offset(
+      (size.width - tp.width) / 2,
+      topPad,
+    );
+    tp.paint(canvas, offset);
   }
 
   @override

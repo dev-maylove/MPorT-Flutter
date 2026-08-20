@@ -42,6 +42,12 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Crescent moon + star on background
+
+- Ditambah **bulan sabit + bintang 5 sudut** di langit (kanan-atas), warna cyan selaras skyline.
+- Glow kuat + fill hampir putih-cyan agar **paling mencolok** di antara partikel & kota.
+- Sedikit drift halus mengikuti phase animasi.
+
 ### 2026-08-20 — Animated background: brighter + faster + more transparent
 
 - Base gradient & vignette dibuat **lebih transparan** agar form login tidak tertutup gelap.
