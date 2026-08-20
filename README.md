@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Login logo & faster stars
+
+- Logo login diganti `assets/images/mport_logo.png`; teks **MPorT** di login dihapus.
+- Gerakan partikel bintang dipercepat (~3.5×), fase animasi lebih cepat, target ~40 fps.
+
+
+
 ### 2026-08-20 — Fix crash lupa password
 
 - Dialog lupa password memakai StatefulWidget sendiri (controller di-dispose di `State.dispose`).

@@ -91,20 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.wifi_tethering_rounded,
-                      size: 56,
-                      color: AppColors.cyan,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'MPorT',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
+                    Image.asset(
+                      'assets/images/mport_logo.png',
+                      height: 120,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
                     ),
                     const SizedBox(height: 28),
                     TextFormField(

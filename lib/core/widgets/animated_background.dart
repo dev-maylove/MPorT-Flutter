@@ -16,7 +16,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     with WidgetsBindingObserver {
   /// Dense starfield
   static const int particleCount = 777;
-  static const int _frameUs = 1000000 ~/ 30; // ~30 fps
+  static const int _frameUs = 1000000 ~/ 40; // ~30 fps
 
   late final List<_Particle> _particles;
   late final List<_Orb> _orbs;
@@ -68,8 +68,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
         r: isAnchor
             ? 0.9 + _rng.nextDouble() * 1.4 * depth
             : 0.25 + _rng.nextDouble() * 0.85 * depth,
-        vx: (_rng.nextDouble() - 0.5) * 0.00016 * depth,
-        vy: (_rng.nextDouble() - 0.5) * 0.00016 * depth,
+        vx: (_rng.nextDouble() - 0.5) * 0.00055 * depth,
+        vy: (_rng.nextDouble() - 0.5) * 0.00055 * depth,
         phase: _rng.nextDouble() * math.pi * 2,
         depth: depth,
         // Only ~1/4 of particles join the network mesh
@@ -128,7 +128,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     if (us - _lastUs < _frameUs) return;
     _lastUs = us;
 
-    _t = (us / 24e6) % 1.0;
+    _t = (us / 10e6) % 1.0;
 
     for (final p in _particles) {
       p.x += p.vx;
