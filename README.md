@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Stability pass
+
+- Widget test: mock `SharedPreferences` agar tidak hang.
+- `Image.asset` logo (login/splash): `errorBuilder` fallback icon.
+- Profile: hindari force-unwrap `phone`.
+- Warna dikembalikan ke tema cyan original; logo transparan + الله + tanpa antena tetap.
+
 ### 2026-08-20 — Crescent moon + star on background
 
 - Ditambah **bulan sabit + bintang 5 sudut** di langit (kanan-atas), warna cyan selaras skyline.

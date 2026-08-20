@@ -54,7 +54,7 @@ class ProfileScreen extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.phone_outlined, color: AppColors.muted),
                 title: const Text('Telepon'),
-                subtitle: Text(u!.phone!),
+                subtitle: Text(u?.phone ?? ''),
               ),
             ),
           const SizedBox(height: 24),

@@ -97,6 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 120,
                       fit: BoxFit.contain,
                       filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.wifi_tethering_rounded,
+                        size: 72,
+                        color: AppColors.cyan,
+                      ),
                     ),
                     const SizedBox(height: 28),
                     TextFormField(

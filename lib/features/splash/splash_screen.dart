@@ -17,6 +17,11 @@ class SplashScreen extends StatelessWidget {
               height: 96,
               fit: BoxFit.contain,
               filterQuality: FilterQuality.high,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.wifi_tethering_rounded,
+                size: 72,
+                color: AppColors.cyan,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
