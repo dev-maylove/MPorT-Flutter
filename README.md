@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Fix missing Gradle wrapper (CI)
+
+- Tambah `android/gradlew`, `android/gradlew.bat`, dan `gradle-wrapper.jar`.
+- Mengatasi error CI: *No such file or directory .../android/gradlew*.
+
+
+
 ### 2026-08-20 — Login logo & faster stars
 
 - Logo login diganti `assets/images/mport_logo.png`; teks **MPorT** di login dihapus.
