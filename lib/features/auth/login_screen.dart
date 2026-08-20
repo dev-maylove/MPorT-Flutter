@@ -45,58 +45,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _forgotPassword() async {
-    final ctrl = TextEditingController(text: _loginId.text.trim());
-    final ok = await showDialog<bool>(
+    // Dialog owns its own controller and disposes safely in State.dispose
+    final identity = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
-        title: const Text('Lupa password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Masukkan email, nomor HP, atau ID akun. Link reset akan dikirim jika data terdaftar.',
-              style: TextStyle(color: AppColors.muted, fontSize: 13),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: ctrl,
-              keyboardType: TextInputType.text,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Email / No. HP / ID',
-                prefixIcon: Icon(Icons.person_outline_rounded),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (ctrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx, true);
-            },
-            child: const Text('Kirim'),
-          ),
-        ],
+      barrierDismissible: true,
+      builder: (ctx) => _ForgotPasswordDialog(
+        initialValue: _loginId.text.trim(),
       ),
     );
 
-    final identity = ctrl.text.trim();
-    ctrl.dispose();
-    if (ok != true || !mounted || identity.isEmpty) return;
+    if (!mounted) return;
+    if (identity == null || identity.isEmpty) return;
 
+    setState(() => _busy = true);
     final err = await context.read<AuthService>().forgotPassword(identity);
     if (!mounted) return;
+    setState(() => _busy = false);
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          err ?? 'Jika data terdaftar, instruksi reset password telah dikirim.',
+          err ??
+              'Jika data terdaftar, instruksi reset password telah dikirim.',
         ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: err != null ? AppColors.danger : AppColors.card,
@@ -165,7 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _pass,
                       obscureText: _obscure,
                       textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _busy ? null : _submit(),
+                      onFieldSubmitted: (_) {
+                        if (!_busy) _submit();
+                      },
                       autofillHints: const [AutofillHints.password],
                       decoration: InputDecoration(
                         labelText: 'Password',
@@ -226,6 +199,83 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Dialog dengan controller sendiri — dispose aman di State.dispose
+/// (menghindari assertion `_dependents.isEmpty` saat dialog masih unmount).
+class _ForgotPasswordDialog extends StatefulWidget {
+  final String initialValue;
+  const _ForgotPasswordDialog({required this.initialValue});
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  late final TextEditingController _ctrl;
+  String? _fieldError;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final v = _ctrl.text.trim();
+    if (v.isEmpty) {
+      setState(() => _fieldError = 'Email, nomor HP, atau ID wajib diisi');
+      return;
+    }
+    Navigator.of(context).pop(v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.card,
+      title: const Text('Lupa password'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Masukkan email, nomor HP, atau ID akun. Link reset akan dikirim jika data terdaftar.',
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _ctrl,
+            keyboardType: TextInputType.text,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: 'Email / No. HP / ID',
+              prefixIcon: const Icon(Icons.person_outline_rounded),
+              errorText: _fieldError,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: const Text('Kirim'),
+        ),
+      ],
     );
   }
 }

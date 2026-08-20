@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Fix crash lupa password
+
+- Dialog lupa password memakai StatefulWidget sendiri (controller di-dispose di `State.dispose`).
+- Menghindari assertion Flutter `_dependents.isEmpty` saat menutup dialog.
+
+
+
 ### 2026-08-20 — Login screen UX
 
 - Hapus subtitle *“Portal pelanggan & teknisi MandalaNet”*.
