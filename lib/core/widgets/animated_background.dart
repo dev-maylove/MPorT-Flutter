@@ -78,9 +78,9 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     });
 
     _orbs = const [
-      _Orb(0.18, 0.14, 0.5, Color(0xFFE2A73E), 0.08, 0.028, 0.018, 0.32, 0.2),
-      _Orb(0.8, 0.3, 0.42, Color(0xFFFFD45A), 0.06, -0.022, 0.025, 0.26, 1.4),
-      _Orb(0.52, 0.78, 0.52, Color(0xFFFFC83D), 0.07, 0.018, -0.022, 0.3, 2.6),
+      _Orb(0.18, 0.14, 0.5, AppColors.cyan, 0.1, 0.028, 0.018, 0.32, 0.2),
+      _Orb(0.8, 0.3, 0.42, AppColors.blue, 0.08, -0.022, 0.025, 0.26, 1.4),
+      _Orb(0.52, 0.78, 0.52, AppColors.purple, 0.09, 0.018, -0.022, 0.3, 2.6),
     ];
 
     // Wireframe city skyline (fixed layout, scales with screen width)
@@ -157,17 +157,18 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     if (_shaderSize == size) return;
     _shaderSize = size;
     final rect = Offset.zero & size;
-    // Deep blue-black base (#020812)
-    _bgPaint.shader = const LinearGradient(
+    // Semi-transparent dark wash so login content stays readable
+    // and stars / city remain vivid.
+    _bgPaint.shader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Color(0xFF020812),
-        Color(0xFF030A14),
-        Color(0xFF020812),
-        Color(0xFF01060E),
+        const Color(0xFF05070E).withValues(alpha: 0.55),
+        const Color(0xFF070B16).withValues(alpha: 0.50),
+        const Color(0xFF04060C).withValues(alpha: 0.48),
+        const Color(0xFF02040A).withValues(alpha: 0.52),
       ],
-      stops: [0.0, 0.35, 0.7, 1.0],
+      stops: const [0.0, 0.35, 0.7, 1.0],
     ).createShader(rect);
     _vignettePaint.shader = const RadialGradient(
       center: Alignment.center,
@@ -365,9 +366,9 @@ class _BgPainter extends CustomPainter {
       end: Alignment.centerRight,
       colors: [
         Colors.transparent,
-        const Color(0xFFE2A73E).withValues(alpha: 0.05),
-        const Color(0xFFFFD45A).withValues(alpha: 0.04),
-        const Color(0xFFFFC83D).withValues(alpha: 0.03),
+        AppColors.cyan.withValues(alpha: 0.06),
+        AppColors.blue.withValues(alpha: 0.07),
+        AppColors.purple.withValues(alpha: 0.05),
         Colors.transparent,
       ],
       stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
@@ -393,6 +394,9 @@ class _BgPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: Offset(ox, oy), radius: radius));
       canvas.drawCircle(Offset(ox, oy), radius, orbPaint);
     }
+
+    // Crescent moon + star (most prominent celestial mark)
+    _drawCrescentMoon(canvas, size, angle);
 
     // Wireframe city skyline (line art)
     _drawCity(canvas, size, angle);
@@ -440,21 +444,19 @@ class _BgPainter extends CustomPainter {
       }
     }
 
-    // Particles — soft gold starfield
-    const goldBright = Color(0xFFFFD45A);
-    const goldMain = Color(0xFFE2A73E);
+    // Particles — brighter cores + stronger halo
     for (final p in particles) {
       final twinkle =
           0.65 + 0.35 * (0.5 + 0.5 * math.sin(angle * 2.8 + p.phase));
-      final alpha = (0.42 + 0.48 * p.depth) * twinkle;
+      final alpha = (0.48 + 0.52 * p.depth) * twinkle;
       final c = Offset(p.x * w, p.y * h);
 
       if (p.r > 0.75 || p.link) {
-        haloPaint.color = goldBright.withValues(alpha: alpha * 0.22);
+        haloPaint.color = AppColors.cyan.withValues(alpha: alpha * 0.28);
         canvas.drawCircle(c, p.r * 2.6, haloPaint);
       }
 
-      corePaint.color = goldMain.withValues(alpha: alpha.clamp(0.0, 1.0));
+      corePaint.color = AppColors.cyan.withValues(alpha: alpha.clamp(0.0, 1.0));
       canvas.drawCircle(c, p.r * 1.15, corePaint);
     }
 
@@ -477,11 +479,118 @@ class _BgPainter extends CustomPainter {
     final d2 = dx * dx + dy * dy;
     if (d2 >= _maxD2 || d2 < 1) return 0;
     final d = math.sqrt(d2);
-    edgePaint.color = const Color(0xFFE2A73E).withValues(
-      alpha: (1 - d / _maxD) * 0.18 * ((a.depth + b.depth) * 0.5),
+    edgePaint.color = AppColors.cyan.withValues(
+      alpha: (1 - d / _maxD) * 0.20 * ((a.depth + b.depth) * 0.5),
     );
     canvas.drawLine(Offset(ax, ay), Offset(bx, by), edgePaint);
     return 1;
+  }
+
+  /// Prominent cyan crescent moon + 5-point star (skyline-matched, brightest mark).
+  void _drawCrescentMoon(Canvas canvas, Size size, double angle) {
+    final w = size.width;
+    final h = size.height;
+    final short = size.shortestSide;
+
+    // Position: upper-right sky, slight drift
+    final cx = w * (0.78 + 0.012 * math.sin(angle * 0.35));
+    final cy = h * (0.16 + 0.010 * math.cos(angle * 0.28));
+    final R = short * 0.095; // outer moon radius
+
+    // Soft outer glow (most conspicuous)
+    final glowPulse = 0.92 + 0.08 * math.sin(angle * 1.1);
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.cyan.withValues(alpha: 0.55 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.22 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.06),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.35, 0.65, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: R * 2.4));
+    canvas.drawCircle(Offset(cx, cy), R * 2.4, glowPaint);
+
+    // Crescent via path difference: large disc minus offset disc
+    final crescent = Path()
+      ..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: R));
+    final cut = Path()
+      ..addOval(Rect.fromCircle(
+        center: Offset(cx + R * 0.38, cy - R * 0.08),
+        radius: R * 0.82,
+      ));
+    final moonPath = Path.combine(PathOperation.difference, crescent, cut);
+
+    // Bright fill
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = RadialGradient(
+        center: const Alignment(-0.35, -0.2),
+        colors: [
+          const Color(0xFF7FF7FF), // almost white-cyan core
+          AppColors.cyan,
+          AppColors.cyan.withValues(alpha: 0.85),
+        ],
+        stops: const [0.0, 0.55, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: R));
+    canvas.drawPath(moonPath, fillPaint);
+
+    // Crisp stroke outline
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.5, short * 0.004)
+      ..color = const Color(0xFFB8FFFF).withValues(alpha: 0.95);
+    canvas.drawPath(moonPath, strokePaint);
+
+    // 5-point star to the upper-right of the crescent tip
+    final starCx = cx + R * 0.95;
+    final starCy = cy - R * 0.55;
+    final starR = R * 0.28;
+    final starPath = _starPath(Offset(starCx, starCy), starR, starR * 0.42, 5);
+
+    // Star glow
+    final starGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFFFFFFF).withValues(alpha: 0.75 * glowPulse),
+          AppColors.cyan.withValues(alpha: 0.35 * glowPulse),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(
+          Rect.fromCircle(center: Offset(starCx, starCy), radius: starR * 2.2));
+    canvas.drawCircle(Offset(starCx, starCy), starR * 2.2, starGlow);
+
+    final starFill = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFE8FFFF);
+    canvas.drawPath(starPath, starFill);
+
+    final starStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.2, short * 0.003)
+      ..color = AppColors.cyan.withValues(alpha: 0.95);
+    canvas.drawPath(starPath, starStroke);
+  }
+
+  Path _starPath(Offset center, double outerR, double innerR, int points) {
+    final path = Path();
+    final step = math.pi / points;
+    // Start at top
+    var angle = -math.pi / 2;
+    for (var i = 0; i < points * 2; i++) {
+      final r = i.isEven ? outerR : innerR;
+      final x = center.dx + math.cos(angle) * r;
+      final y = center.dy + math.sin(angle) * r;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+      angle += step;
+    }
+    path.close();
+    return path;
   }
 
   void _drawCity(Canvas canvas, Size size, double angle) {
@@ -490,20 +599,18 @@ class _BgPainter extends CustomPainter {
     final ground = h * 0.92;
     final maxBuildingH = h * 0.38;
 
-    // Gold skyline palette
-    const skyBase = Color(0xFFE2A73E); // gold utama
-    const skyBright = Color(0xFFFFD45A); // gold terang
-    const skyGlow = Color(0xFFFFC83D); // gold glow
-    const skyHighlight = Color(0xFFFFF0A0); // highlight
+    // Skyline palette: #00E5FF (base) + #63F5FF (highlight)
+    const skyBase = Color(0xFF00E5FF);
+    const skyBright = Color(0xFF63F5FF);
 
     // Horizon base line
     cityStroke
       ..strokeWidth = 1.15
-      ..color = skyBase.withValues(alpha: 0.50);
+      ..color = skyBase.withValues(alpha: 0.45);
     canvas.drawLine(Offset(0, ground), Offset(w, ground), cityStroke);
 
     // Soft ground fill strip
-    cityWindow.color = const Color(0x28E2A73E);
+    cityWindow.color = const Color(0x3300E5FF);
     canvas.drawRect(
       Rect.fromLTRB(0, ground, w, h),
       cityWindow,
@@ -600,36 +707,30 @@ class _BgPainter extends CustomPainter {
     }
   }
 
-  /// Brightest gold "الله" at the top of the canvas.
+  /// Brightest "الله" at the top of the canvas (skyline palette).
   void _drawAllah(Canvas canvas, Size size, double angle) {
-    const goldMain = Color(0xFFE2A73E);
-    const goldBright = Color(0xFFFFD45A);
-    const goldGlow = Color(0xFFFFC83D);
-    const goldHighlight = Color(0xFFFFF0A0);
+    const skyBright = Color(0xFF63F5FF);
+    const skyBase = Color(0xFF00E5FF);
 
-    final pulse = 0.90 + 0.10 * math.sin(angle * 1.6);
+    final pulse = 0.88 + 0.12 * math.sin(angle * 1.6);
     final fontSize = (size.shortestSide * 0.085).clamp(28.0, 52.0);
 
     final tp = TextPainter(
       text: TextSpan(
         text: 'الله',
         style: TextStyle(
-          color: goldHighlight.withValues(alpha: (0.98 * pulse).clamp(0.0, 1.0)),
+          color: skyBright.withValues(alpha: (0.95 * pulse).clamp(0.0, 1.0)),
           fontSize: fontSize,
           fontWeight: FontWeight.w700,
           letterSpacing: 2,
           shadows: [
             Shadow(
-              color: goldBright.withValues(alpha: 0.70 * pulse),
-              blurRadius: 16,
+              color: skyBright.withValues(alpha: 0.55 * pulse),
+              blurRadius: 18,
             ),
             Shadow(
-              color: goldGlow.withValues(alpha: 0.50 * pulse),
+              color: skyBase.withValues(alpha: 0.35 * pulse),
               blurRadius: 28,
-            ),
-            Shadow(
-              color: goldMain.withValues(alpha: 0.35 * pulse),
-              blurRadius: 40,
             ),
           ],
         ),
