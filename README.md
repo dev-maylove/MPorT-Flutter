@@ -42,6 +42,14 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Animated background: brighter + faster + more transparent
+
+- Base gradient & vignette dibuat **lebih transparan** agar form login tidak tertutup gelap.
+- Bintang (particles) **lebih cerah**, halo lebih kuat, ukuran core sedikit diperbesar.
+- Kecepatan gerak partikel ~**2.5×** lebih cepat; phase animasi dipercepat.
+- Skyline kota (outline, jendela, antenna, street lines) **lebih terang** dan window twinkle lebih hidup.
+- Target frame ~48 fps.
+
 ### 2026-08-20 — Bugfix: safe int parsing + splash logo
 
 - Semua `_asInt` di model (`User` / `Dashboard` / `Invoice` / `Package`) sekarang menangani `num` (double dari JSON) selain `int`/`String`.

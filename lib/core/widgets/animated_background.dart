@@ -16,7 +16,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     with WidgetsBindingObserver {
   /// Dense starfield
   static const int particleCount = 777;
-  static const int _frameUs = 1000000 ~/ 40; // ~30 fps
+  static const int _frameUs = 1000000 ~/ 48; // ~48 fps target
 
   late final List<_Particle> _particles;
   late final List<_Orb> _orbs;
@@ -68,8 +68,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
         r: isAnchor
             ? 0.9 + _rng.nextDouble() * 1.4 * depth
             : 0.25 + _rng.nextDouble() * 0.85 * depth,
-        vx: (_rng.nextDouble() - 0.5) * 0.00055 * depth,
-        vy: (_rng.nextDouble() - 0.5) * 0.00055 * depth,
+        vx: (_rng.nextDouble() - 0.5) * 0.00135 * depth,
+        vy: (_rng.nextDouble() - 0.5) * 0.00135 * depth,
         phase: _rng.nextDouble() * math.pi * 2,
         depth: depth,
         // Only ~1/4 of particles join the network mesh
@@ -128,7 +128,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     if (us - _lastUs < _frameUs) return;
     _lastUs = us;
 
-    _t = (us / 10e6) % 1.0;
+    // Faster phase so stars / aurora / city windows feel more alive
+    _t = (us / 5.5e6) % 1.0;
 
     for (final p in _particles) {
       p.x += p.vx;
@@ -156,22 +157,24 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     if (_shaderSize == size) return;
     _shaderSize = size;
     final rect = Offset.zero & size;
-    _bgPaint.shader = const LinearGradient(
+    // Semi-transparent dark wash so login content stays readable
+    // and stars / city remain vivid.
+    _bgPaint.shader = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Color(0xFF05070E),
-        Color(0xFF070B16),
-        Color(0xFF04060C),
-        Color(0xFF02040A),
+        const Color(0xFF05070E).withValues(alpha: 0.55),
+        const Color(0xFF070B16).withValues(alpha: 0.50),
+        const Color(0xFF04060C).withValues(alpha: 0.48),
+        const Color(0xFF02040A).withValues(alpha: 0.52),
       ],
-      stops: [0.0, 0.35, 0.7, 1.0],
+      stops: const [0.0, 0.35, 0.7, 1.0],
     ).createShader(rect);
     _vignettePaint.shader = const RadialGradient(
       center: Alignment.center,
       radius: 1.05,
-      colors: [Colors.transparent, Color(0x66000000)],
-      stops: [0.55, 1.0],
+      colors: [Colors.transparent, Color(0x44000000)],
+      stops: [0.60, 1.0],
     ).createShader(rect);
   }
 
@@ -363,9 +366,9 @@ class _BgPainter extends CustomPainter {
       end: Alignment.centerRight,
       colors: [
         Colors.transparent,
-        AppColors.cyan.withValues(alpha: 0.035),
-        AppColors.blue.withValues(alpha: 0.04),
-        AppColors.purple.withValues(alpha: 0.03),
+        AppColors.cyan.withValues(alpha: 0.06),
+        AppColors.blue.withValues(alpha: 0.07),
+        AppColors.purple.withValues(alpha: 0.05),
         Colors.transparent,
       ],
       stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
@@ -435,20 +438,20 @@ class _BgPainter extends CustomPainter {
       }
     }
 
-    // Particles — halo only for brighter/larger ones
+    // Particles — brighter cores + stronger halo
     for (final p in particles) {
       final twinkle =
-          0.55 + 0.45 * (0.5 + 0.5 * math.sin(angle * 2.0 + p.phase));
-      final alpha = (0.3 + 0.55 * p.depth) * twinkle;
+          0.65 + 0.35 * (0.5 + 0.5 * math.sin(angle * 2.8 + p.phase));
+      final alpha = (0.48 + 0.52 * p.depth) * twinkle;
       final c = Offset(p.x * w, p.y * h);
 
-      if (p.r > 0.85 || p.link) {
-        haloPaint.color = AppColors.cyan.withValues(alpha: alpha * 0.18);
-        canvas.drawCircle(c, p.r * 2.2, haloPaint);
+      if (p.r > 0.75 || p.link) {
+        haloPaint.color = AppColors.cyan.withValues(alpha: alpha * 0.28);
+        canvas.drawCircle(c, p.r * 2.6, haloPaint);
       }
 
-      corePaint.color = AppColors.cyan.withValues(alpha: alpha);
-      canvas.drawCircle(c, p.r, corePaint);
+      corePaint.color = AppColors.cyan.withValues(alpha: alpha.clamp(0.0, 1.0));
+      canvas.drawCircle(c, p.r * 1.15, corePaint);
     }
 
     canvas.drawRect(rect, vignettePaint);
@@ -471,7 +474,7 @@ class _BgPainter extends CustomPainter {
     if (d2 >= _maxD2 || d2 < 1) return 0;
     final d = math.sqrt(d2);
     edgePaint.color = AppColors.cyan.withValues(
-      alpha: (1 - d / _maxD) * 0.12 * ((a.depth + b.depth) * 0.5),
+      alpha: (1 - d / _maxD) * 0.20 * ((a.depth + b.depth) * 0.5),
     );
     canvas.drawLine(Offset(ax, ay), Offset(bx, by), edgePaint);
     return 1;
@@ -485,12 +488,12 @@ class _BgPainter extends CustomPainter {
 
     // Horizon base line
     cityStroke
-      ..strokeWidth = 1.0
-      ..color = AppColors.cyan.withValues(alpha: 0.18);
+      ..strokeWidth = 1.15
+      ..color = AppColors.cyan.withValues(alpha: 0.38);
     canvas.drawLine(Offset(0, ground), Offset(w, ground), cityStroke);
 
     // Soft ground fill strip
-    cityWindow.color = const Color(0x1400E5FF);
+    cityWindow.color = const Color(0x2800E5FF);
     canvas.drawRect(
       Rect.fromLTRB(0, ground, w, h),
       cityWindow,
@@ -506,8 +509,8 @@ class _BgPainter extends CustomPainter {
 
       // Building outline
       cityStroke
-        ..strokeWidth = 1.1
-        ..color = AppColors.cyan.withValues(alpha: 0.22);
+        ..strokeWidth = 1.25
+        ..color = AppColors.cyan.withValues(alpha: 0.42);
       final outline = Path()
         ..moveTo(left, ground)
         ..lineTo(left, top)
@@ -517,8 +520,8 @@ class _BgPainter extends CustomPainter {
 
       // Roof line accent
       cityStroke
-        ..strokeWidth = 1.3
-        ..color = AppColors.cyan.withValues(alpha: 0.28);
+        ..strokeWidth = 1.5
+        ..color = AppColors.cyan.withValues(alpha: 0.52);
       canvas.drawLine(Offset(left, top), Offset(right, top), cityStroke);
 
       // Spire / peak
@@ -526,8 +529,8 @@ class _BgPainter extends CustomPainter {
         final mid = (left + right) / 2;
         final peak = top - bh * 0.12;
         cityStroke
-          ..strokeWidth = 1.0
-          ..color = AppColors.cyan.withValues(alpha: 0.3);
+          ..strokeWidth = 1.15
+          ..color = AppColors.cyan.withValues(alpha: 0.55);
         canvas.drawLine(Offset(left + bw * 0.2, top), Offset(mid, peak), cityStroke);
         canvas.drawLine(Offset(right - bw * 0.2, top), Offset(mid, peak), cityStroke);
       }
@@ -537,8 +540,8 @@ class _BgPainter extends CustomPainter {
         final mid = (left + right) / 2;
         final tip = top - (b.spire ? bh * 0.18 : bh * 0.1);
         cityStroke
-          ..strokeWidth = 0.9
-          ..color = AppColors.cyan.withValues(alpha: 0.35);
+          ..strokeWidth = 1.05
+          ..color = AppColors.cyan.withValues(alpha: 0.60);
         canvas.drawLine(Offset(mid, top), Offset(mid, tip), cityStroke);
         canvas.drawLine(
           Offset(mid - 4, tip + 6),
@@ -549,8 +552,8 @@ class _BgPainter extends CustomPainter {
 
       // Floor lines (horizontal)
       cityStroke
-        ..strokeWidth = 0.6
-        ..color = AppColors.cyan.withValues(alpha: 0.12);
+        ..strokeWidth = 0.7
+        ..color = AppColors.cyan.withValues(alpha: 0.24);
       final floorH = bh / (b.floors + 1);
       for (var f = 1; f <= b.floors; f++) {
         final fy = top + floorH * f;
@@ -559,15 +562,15 @@ class _BgPainter extends CustomPainter {
 
       // Column lines (vertical)
       cityStroke
-        ..strokeWidth = 0.55
-        ..color = AppColors.cyan.withValues(alpha: 0.1);
+        ..strokeWidth = 0.65
+        ..color = AppColors.cyan.withValues(alpha: 0.20);
       final colW = bw / (b.cols + 1);
       for (var c = 1; c <= b.cols; c++) {
         final cx = left + colW * c;
         canvas.drawLine(Offset(cx, top + 1), Offset(cx, ground - 1), cityStroke);
       }
 
-      // Window dots — sparse, subtle twinkle from seed + time
+      // Window dots — brighter + stronger twinkle
       final padX = bw * 0.14;
       final padY = bh * 0.08;
       final cellW = (bw - padX * 2) / b.cols;
@@ -578,12 +581,12 @@ class _BgPainter extends CustomPainter {
           final lit = ((b.seed + row * 17 + col * 31) % 7) > 2;
           if (!lit) continue;
           final tw =
-              0.7 + 0.3 * math.sin(angle * 1.4 + (b.seed + row + col) * 0.37);
+              0.75 + 0.25 * math.sin(angle * 2.0 + (b.seed + row + col) * 0.37);
           final wx = left + padX + cellW * (col + 0.5);
           final wy = top + padY + cellH * (row + 0.5);
-          final rw = cellW * 0.28;
-          final rh = cellH * 0.28;
-          cityWindow.color = AppColors.cyan.withValues(alpha: 0.08 * tw);
+          final rw = cellW * 0.32;
+          final rh = cellH * 0.32;
+          cityWindow.color = AppColors.cyan.withValues(alpha: 0.22 * tw);
           canvas.drawRect(
             Rect.fromCenter(center: Offset(wx, wy), width: rw, height: rh),
             cityWindow,
@@ -595,8 +598,8 @@ class _BgPainter extends CustomPainter {
     // Perspective street lines (vanishing toward lower center)
     final vanish = Offset(w * 0.5, ground + h * 0.02);
     cityStroke
-      ..strokeWidth = 0.7
-      ..color = AppColors.cyan.withValues(alpha: 0.08);
+      ..strokeWidth = 0.85
+      ..color = AppColors.cyan.withValues(alpha: 0.18);
     for (final fx in [0.15, 0.3, 0.45, 0.55, 0.7, 0.85]) {
       canvas.drawLine(Offset(w * fx, ground), vanish, cityStroke);
     }
