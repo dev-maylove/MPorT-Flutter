@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/exit_guard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,7 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ExitGuard(
+      homePath: '/login',
+      isOnHome: true,
+      child: Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
@@ -132,6 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
