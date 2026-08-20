@@ -6,15 +6,20 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.bg,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wifi_tethering_rounded, size: 72, color: AppColors.cyan),
-            SizedBox(height: 16),
-            Text(
+            Image.asset(
+              'assets/images/mport_logo.png',
+              height: 96,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+            const SizedBox(height: 20),
+            const Text(
               'MPorT',
               style: TextStyle(
                 fontSize: 28,
@@ -23,13 +28,13 @@ class SplashScreen extends StatelessWidget {
                 letterSpacing: 1.2,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'MandalaNet Portal',
               style: TextStyle(color: AppColors.muted, fontSize: 14),
             ),
-            SizedBox(height: 32),
-            SizedBox(
+            const SizedBox(height: 32),
+            const SizedBox(
               width: 28,
               height: 28,
               child: CircularProgressIndicator(

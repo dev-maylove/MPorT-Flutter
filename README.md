@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-08-20 — Bugfix: safe int parsing + splash logo
+
+- Semua `_asInt` di model (`User` / `Dashboard` / `Invoice` / `Package`) sekarang menangani `num` (double dari JSON) selain `int`/`String`.
+- `tech_materials_screen`: ganti cast `as int?` pada `stock` / `low_threshold` → `_asInt` (hindari crash jika backend kirim angka sebagai double).
+- Splash screen memakai `assets/images/mport_logo.png` (konsisten dengan login).
+- Hapus entri `assets/icons/` kosong di `pubspec.yaml`.
+
 ### 2026-08-20 — App icon + login logo
 
 - Logo login & **ikon aplikasi** diganti gambar MPorT crown/lightning terbaru.

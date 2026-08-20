@@ -67,6 +67,7 @@ class PackageModel {
 
   static int _asInt(dynamic v) {
     if (v is int) return v;
+    if (v is num) return v.toInt();
     if (v is String) return int.tryParse(v) ?? 0;
     return 0;
   }

@@ -68,9 +68,8 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
         _requests = _list(root['requests']);
         _catalog = _list(root['catalog']);
         _lowStock = _list(root['low_stock']);
-        _lowThreshold = (root['low_threshold'] is int)
-            ? root['low_threshold'] as int
-            : 2;
+        _lowThreshold = _asInt(root['low_threshold']);
+        if (_lowThreshold <= 0) _lowThreshold = 2;
         _loading = false;
       });
     } catch (e) {
@@ -352,7 +351,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
                     _requestList(_requests),
                     _stockList(_lowStock.isEmpty
                         ? _stock
-                            .where((m) => (m['stock'] as int? ?? 0) <= _lowThreshold)
+                            .where((m) => _asInt(m['stock']) <= _lowThreshold)
                             .toList()
                         : _lowStock),
                   ],
@@ -372,7 +371,7 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
         itemCount: items.length,
         itemBuilder: (_, i) {
           final m = items[i];
-          final stock = m['stock'] as int? ?? 0;
+          final stock = _asInt(m['stock']);
           final low = stock <= _lowThreshold;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
