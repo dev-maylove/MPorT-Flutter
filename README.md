@@ -42,6 +42,13 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-09-03 — GitHub Actions Node.js 24
+
+- `actions/checkout@v4` → `@v6` (Node.js 24)
+- `actions/upload-artifact@v4` → `@v6` (Node.js 24)
+- Menghilangkan warning deprecation Node.js 20 di runner Actions.
+
+
 ### 2026-09-03 — Sync audit with backend MPorT.v2.0.1-hardened ROUND2
 
 - Deep review API paths vs `routes/api.php` (legacy + v1 + tech/admin extras).
