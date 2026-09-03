@@ -42,6 +42,12 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-09-03 — Actions Node 24 (release)
+
+- `softprops/action-gh-release@v2` → `@v3` (Node.js 24)
+- Semua action JS di workflow sudah Node 24 (checkout@v6, upload-artifact@v6, gh-release@v3)
+
+
 ### 2026-09-03 — App icon & logo baru
 
 - Logo login/splash: `assets/images/mport_logo.png` diganti desain monogram M biru neon (circuit).
