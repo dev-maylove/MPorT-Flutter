@@ -15,3 +15,12 @@ android/local.properties
 *.apk
 *.aab
 .DS_Store
+android/app/mport-release.jks
+
+# Android signing
+android/key.properties
+android/app/mport-release.p12
+
+# Local workflow/build backups
+.github/workflows/backup/
+android/app/build.gradle.kts.backup-*

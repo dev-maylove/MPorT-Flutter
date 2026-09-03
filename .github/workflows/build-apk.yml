@@ -6,7 +6,7 @@ on:
       api_base_url:
         description: "API base URL (dart-define)"
         required: false
-        default: "http://192.168.1.102:8000"
+        default: "https://api.mandalanet.id"
       build_mode:
         description: "debug or release"
         required: true
@@ -49,44 +49,112 @@ jobs:
       - name: Pub get
         run: flutter pub get
 
-      - name: Ensure Android embedding v2
+      - name: Verify Android project
         run: |
-          if ! grep -q 'flutterEmbedding' android/app/src/main/AndroidManifest.xml 2>/dev/null; then
-            rm -rf android
-            flutter create . --project-name mport --org id.mandalanet --platforms=android
-          fi
-          # Flutter 3.47+ requires Gradle >= 8.14
-          if [ -f android/gradle/wrapper/gradle-wrapper.properties ]; then
-            sed -i 's/gradle-[0-9.]*-all.zip/gradle-9.3.1-all.zip/' android/gradle/wrapper/gradle-wrapper.properties
-          fi
+          test -f android/app/build.gradle.kts
+          test -f android/settings.gradle
+          test -f android/app/src/main/AndroidManifest.xml
+
           if ! grep -q 'flutterEmbedding' android/app/src/main/AndroidManifest.xml; then
-            echo "ERROR: Android embedding v2 still missing"
+            echo "ERROR: Android embedding v2 is missing."
+            echo "Refusing to recreate android/ because that could overwrite signing configuration."
             exit 1
           fi
+
+          if [ -f android/gradle/wrapper/gradle-wrapper.properties ]; then
+            sed -i 's/gradle-[0-9.]*-all.zip/gradle-9.3.1-all.zip/' \
+              android/gradle/wrapper/gradle-wrapper.properties
+          fi
+
           if ! grep -q 'usesCleartextTraffic' android/app/src/main/AndroidManifest.xml; then
-            sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml || true
+            sed -i 's/<application/<application android:usesCleartextTraffic="true"/' \
+              android/app/src/main/AndroidManifest.xml || true
           fi
 
       - name: Resolve API URL
         id: api
         run: |
-          if [ -n "${{ github.event.inputs.api_base_url }}" ]; then
-            echo "url=${{ github.event.inputs.api_base_url }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "url=https://api.mandalanet.id" >> "$GITHUB_OUTPUT"
+          URL="${{ github.event.inputs.api_base_url }}"
+          if [ -z "$URL" ]; then
+            URL="https://api.mandalanet.id"
           fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Resolve build mode
         id: mode
         run: |
           MODE="${{ github.event.inputs.build_mode }}"
-          if [ -z "$MODE" ]; then MODE=release; fi
+          if [ -z "$MODE" ]; then
+            MODE=release
+          fi
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+      - name: Configure release signing
+        if: steps.mode.outputs.mode == 'release'
+        env:
+          MPORT_KEYSTORE_BASE64: ${{ secrets.MPORT_KEYSTORE_BASE64 }}
+          MPORT_KEYSTORE_PASSWORD: ${{ secrets.MPORT_KEYSTORE_PASSWORD }}
+          MPORT_KEY_ALIAS: ${{ secrets.MPORT_KEY_ALIAS }}
+          MPORT_KEY_PASSWORD: ${{ secrets.MPORT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          test -n "$MPORT_KEYSTORE_BASE64"
+          test -n "$MPORT_KEYSTORE_PASSWORD"
+          test -n "$MPORT_KEY_ALIAS"
+          test -n "$MPORT_KEY_PASSWORD"
+
+          printf '%s' "$MPORT_KEYSTORE_BASE64" | base64 --decode > android/app/mport-release.p12
+
+          cat > android/key.properties <<EOF2
+          storePassword=$MPORT_KEYSTORE_PASSWORD
+          keyPassword=$MPORT_KEY_PASSWORD
+          keyAlias=$MPORT_KEY_ALIAS
+          storeFile=mport-release.p12
+          storeType=PKCS12
+          EOF2
+
+          chmod 600 android/key.properties
+          chmod 600 android/app/mport-release.p12
+
+          test -s android/app/mport-release.p12
+          test -s android/key.properties
+
+      - name: Verify signing configuration
+        if: steps.mode.outputs.mode == 'release'
+        run: |
+          grep -q 'create("release")' android/app/build.gradle.kts
+          grep -q 'signingConfig = signingConfigs.getByName("release")' android/app/build.gradle.kts
+          grep -q 'storeType' android/app/build.gradle.kts
+          test -f android/key.properties
+          test -f android/app/mport-release.p12
 
       - name: Build APK
         run: |
           flutter build apk --${{ steps.mode.outputs.mode }} \
             --dart-define=API_BASE_URL=${{ steps.api.outputs.url }}
+
+      - name: Verify APK signature
+        if: steps.mode.outputs.mode == 'release'
+        run: |
+          APK=$(find build/app/outputs/flutter-apk -type f -name "*.apk" | head -1)
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK not found"
+            exit 1
+          fi
+
+          echo "APK: $APK"
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" \
+            -type f -name apksigner | sort -V | tail -1)
+
+          if [ -z "$APKSIGNER" ]; then
+            echo "ERROR: apksigner not found"
+            exit 1
+          fi
+
+          "$APKSIGNER" verify --verbose "$APK"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6
@@ -95,3 +163,9 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Cleanup signing material
+        if: always()
+        run: |
+          rm -f android/key.properties
+          rm -f android/app/mport-release.p12
