@@ -153,8 +153,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       },
     );
 
-    if (ok != true || !mounted) return;
-    final auth = context.read<AuthService>();
     final body = <String, dynamic>{
       'name': name.text.trim(),
       'email': email.text.trim(),
@@ -163,6 +161,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       'is_active': isActive,
     };
     if (pass.text.isNotEmpty) body['password'] = pass.text;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      name.dispose();
+      email.dispose();
+      phone.dispose();
+      pass.dispose();
+    });
+    if (ok != true || !mounted) return;
+    final auth = context.read<AuthService>();
 
     final res = isEdit
         ? await auth.client.put(

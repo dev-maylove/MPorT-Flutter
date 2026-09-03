@@ -42,6 +42,16 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-09-03 — Sync audit with backend MPorT.v2.0.1-hardened ROUND2
+
+- Deep review API paths vs `routes/api.php` (legacy + v1 + tech/admin extras).
+- Auth login/register/me/forgot-password payload & response shapes verified against V1 AuthController.
+- Dashboard, invoices, packages, tickets, tech materials/map, admin users response keys (`data`, `summary`, `recent_invoices`, etc.) aligned.
+- Safe int parsing (`_asInt`) retained for stock / counts from JSON numbers.
+- Profile avatar initial: null/whitespace-safe (no force-unwrap crash).
+- Cleartext HTTP + Sanctum Bearer still required for LAN `http://192.168.1.102:8000`.
+
+
 ### 2026-08-20 — Stability pass
 
 - Widget test: mock `SharedPreferences` agar tidak hang.

@@ -188,6 +188,13 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
       },
     );
 
+    final qty = int.tryParse(qtyCtrl.text) ?? 1;
+    final notes = notesCtrl.text.trim();
+    // Dispose after sheet unmount
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      qtyCtrl.dispose();
+      notesCtrl.dispose();
+    });
     if (ok != true || !mounted) return;
     final auth = context.read<AuthService>();
     final res = await auth.client.post(
@@ -196,9 +203,9 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
       body: {
         if (materialId != null) 'material_id': materialId,
         if (materialName != null) 'material_name': materialName,
-        'qty': int.tryParse(qtyCtrl.text) ?? 1,
+        'qty': qty,
         'priority': priority,
-        'notes': notesCtrl.text.trim(),
+        'notes': notes,
       },
     );
     if (!mounted) return;
@@ -284,8 +291,10 @@ class _TechMaterialsScreenState extends State<TechMaterialsScreen>
       'qty': int.tryParse(qtyCtrl.text) ?? 1,
       'notes': notesCtrl.text.trim(),
     };
-    qtyCtrl.dispose();
-    notesCtrl.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      qtyCtrl.dispose();
+      notesCtrl.dispose();
+    });
     final res = await auth.client.post(
       ApiConfig.techMaterialUsage,
       auth: true,
