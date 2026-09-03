@@ -42,6 +42,12 @@ git push origin v2.0.2
 
 ## Changelog
 
+### 2026-09-03 — App icon & logo baru
+
+- Logo login/splash: `assets/images/mport_logo.png` diganti desain monogram M biru neon (circuit).
+- Icon launcher Android (mdpi–xxxhdpi + adaptive foreground/background) diselaraskan.
+
+
 ### 2026-09-03 — GitHub Actions Node.js 24
 
 - `actions/checkout@v4` → `@v6` (Node.js 24)
